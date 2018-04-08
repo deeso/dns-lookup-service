@@ -33,10 +33,8 @@ fn main() {
     let dsa: config::DnsServiceArgs = config::parse_args();
 
     let odscs = config::DnsServerConfigs::from_service_args(&dsa);
-    match odscs {
-        Some(dscs) => {
-            is_server = dscs.is_server;
-        }
+    match odscs.as_ref() {
+        Some(dscs) => is_server = dscs.is_server.clone(),
         None => {
             println!("Failed to parse a dns server config from arguments");
             return;

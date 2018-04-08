@@ -127,7 +127,8 @@ impl DnsLookupService {
 impl DnsLookupServices {
     pub fn from_service_configs(dsc: &config::DnsServerConfigs) -> Option<DnsLookupServices> {
         let mut results : Vec<DnsLookupService> = vec![];
-        for c in dsc.servers {
+        let servers = &dsc.servers;
+        for c in servers {
             let dls = DnsLookupService {
                 dns_server: c.nameserver.clone(),
                 dns_port: "53".to_string(),
@@ -142,7 +143,8 @@ impl DnsLookupServices {
 
     pub fn check(&self, hostname: &String) -> DnsLookupResults{
         let mut results : Vec<DnsLookupResult> = vec![];
-        for service in self.servicers {
+        let servicers = &self.servicers; 
+        for service in servicers {
             let svc_results = service.check(hostname);
             for r in svc_results.results {
                 results.push(r)

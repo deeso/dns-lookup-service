@@ -35,26 +35,27 @@ fn handle_get(request: &mut Request, config: &lookup::DnsLookupServices) -> Iron
 
 pub fn run_server(server_configs: &config::DnsServerConfigs) {
     let odlss = lookup::DnsLookupServices::from_service_configs(&server_configs);
-    match odlss {
-        Some(_) => {}
+
+    match odlss.as_ref() {
+        Some(refsc) => {
+            let sc = refsc.clone();
+            let sc1 = refsc.clone();
+            let sc2 = refsc.clone();
+            let mut router = Router::new();
+            // router.post(LOOKUP_REQ, dummy_lookup, "lookup");
+            router.post(LOOKUP_REQ, move |request: &mut Request| handle_lookup(request, &sc.clone()), "lookup");
+            router.get(GET_REQ, move |request: &mut Request| handle_get(request, &sc1.clone()), "get_dns_servers");
+            router.get(DEFAULT_REQ, move |request: &mut Request| handle_get(request, &sc2.clone()), "index");
+
+            let hostname = &server_configs.listen_host;
+            let port = &server_configs.listen_port;
+            let address = format!("{}:{}", hostname, port);
+            Iron::new(router).http(address).unwrap();
+        }
         None => {
             println!("Failed to parse a dns server config from arguments");
             return;
         }
     }
-
-    let sc = odlss.unwrap().clone();
-    let sc1 = odlss.unwrap().clone();
-    let sc2 = odlss.unwrap().clone();
-    let mut router = Router::new();
-    // router.post(LOOKUP_REQ, dummy_lookup, "lookup");
-    router.post(LOOKUP_REQ, move |request: &mut Request| handle_lookup(request, &sc.clone()), "lookup");
-    router.get(GET_REQ, move |request: &mut Request| handle_get(request, &sc1.clone()), "get_dns_servers");
-    router.get(DEFAULT_REQ, move |request: &mut Request| handle_get(request, &sc2.clone()), "index");
-
-    let hostname = &server_configs.listen_host;
-    let port = &server_configs.listen_port;
-    let address = format!("{}:{}", hostname, port);
-    Iron::new(router).http(address).unwrap();
 
 }
