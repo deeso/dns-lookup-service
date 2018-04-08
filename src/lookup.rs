@@ -10,7 +10,7 @@ use std::str::FromStr;
 
 use config;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DnsLookupService {
     pub dns_server: String,
     pub dns_port: String,
@@ -19,16 +19,25 @@ pub struct DnsLookupService {
     pub ip6: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DnsLookupServices {
     pub servicers: Vec<DnsLookupService>,
+    pub listen_port: String,
+    pub listen_host: String,
 }
 
 #[derive(Serialize, Debug)]
 pub struct DnsLookupRequest {
-    name: String,
-    dns_server: String,
-    atype: String,
+    pub name: String,
+    pub dns_server: String,
+}
+
+impl DnsLookupRequest {
+    pub fn from_web_json(req_payload: &String) -> Option<DnsLookupRequest> {
+        
+        return None;    
+    }
+
 }
 
 #[derive(Serialize, Debug)]
@@ -73,15 +82,15 @@ fn extract_results(response: &Message) -> DnsLookupResults {
 
 impl DnsLookupService {
 
-    pub fn from_service_config(dsc: &config::DnsServerConfig) -> Option<DnsLookupService> {
-        return Some(DnsLookupService {
-            dns_server: dsc.nameserver.clone(),
-            dns_port: "53".to_string(),
-            use_tls: false,
-            ip4: dsc.ip4.clone(),
-            ip6: dsc.ip6.clone(),
-        })
-    }
+    // pub fn from_service_config(dsc: &config::DnsServerConfig) -> Option<DnsLookupService> {
+    //     return Some(DnsLookupService {
+    //         dns_server: dsc.nameserver.clone(),
+    //         dns_port: "53".to_string(),
+    //         use_tls: false,
+    //         ip4: dsc.ip4.clone(),
+    //         ip6: dsc.ip6.clone(),
+    //     })
+    // }
 
     pub fn check(&self, hostname: &String) -> DnsLookupResults{
         let mut results : Vec<DnsLookupResult> = vec![];
@@ -138,7 +147,11 @@ impl DnsLookupServices {
             };
             results.push(dls);
         }
-        return Some(DnsLookupServices{servicers:results})
+        return Some(DnsLookupServices{
+            servicers:results,
+            listen_port: dsc.listen_port.clone(),
+            listen_host: dsc.listen_host.clone(),
+        })
     }
 
     pub fn check(&self, hostname: &String) -> DnsLookupResults{

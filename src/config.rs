@@ -18,7 +18,6 @@ static HOSTNAME: &'static str = "--hostname";
 static DNS_SERVER: &'static str = "--dns_server";
 static V4: &'static str = "--ip4";
 static V6: &'static str = "--ip6";
-static BOTH: &'static str = "--both";
 static CONFIG: &'static str = "--config";
 static SERVER: &'static str = "--server";
 static LHOST: &'static str = "--lhost";
