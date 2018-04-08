@@ -1,0 +1,122 @@
+[servers]
+    [servers.google]
+        name = "google"
+        nameserver = '8.8.8.8'
+        port = '53'
+        use_tls = false
+        ip4 = true
+        ip6 = true
+        listen_host = ""
+        listen_port = '8888'
+
+    [servers.cloudflare]
+        name = "cloudflare"
+        nameserver = '1.1.1.1'
+        port = '53'
+        use_tls = false
+        ip4 = true
+        ip6 = true
+        listen_host = ""
+        listen_port = '1111'
+
+    [servers.quad9]
+        name = "quad9"
+        nameserver = '9.9.9.9'
+        port = '53'
+        use_tls = false
+        ip4 = true
+        ip6 = true
+        listen_host = ""
+        listen_port = '9999'
+
+    [servers.opendns]
+        name = "opendns"
+        nameserver = '208.67.222.222'
+        port = '53'
+        use_tls = false
+        ip4 = true
+        ip6 = true
+        listen_host = ""
+        listen_port = '2222'
+
+    [servers.cleanbrowsing]
+        name = "cleanbrowsing"
+        nameserver = '185.228.168.168'
+        port = '53'
+        use_tls = false
+        ip4 = true
+        ip6 = true
+        listen_host = ""
+        listen_port = '8168'
+
+    [servers.connectsafe]
+        name = "connectsafe"
+        nameserver = '199.85.126.20'
+        port = '53'
+        use_tls = false
+        ip4 = true
+        ip6 = true
+        listen_host = ""
+        listen_port = '2620'
+
+    [servers.yandex]
+        name = "yandex"
+        nameserver = '77.88.8.7'
+        port = '53'
+        use_tls = false
+        ip4 = true
+        ip6 = true
+        listen_host = ""
+        listen_port = '8887'
+
+    [servers.comodo]
+        name = "comodo"
+        nameserver = '8.26.56.26'
+        port = '53'
+        use_tls = false
+        ip4 = true
+        ip6 = true
+        listen_host = ""
+        listen_port = '5626'
+
+
+[dns-compare-client]
+    [dns-compare-client.google]
+        name = "google"
+        listen_host = ""
+        listen_port = '8888'
+
+    [dns-compare-client.cloudflare]
+        name = "cloudflare"
+        listen_host = ""
+        listen_port = '1111'
+
+    [dns-compare-client.quad9]
+        name = "quad9"
+        listen_host = ""
+        listen_port = '9999'
+
+    [dns-compare-client.opendns]
+        name = "opendns"
+        listen_host = ""
+        listen_port = '2222'
+
+    [dns-compare-client.cleanbrowsing]
+        name = "cleanbrowsing"
+        listen_host = ""
+        listen_port = '8168'
+
+    [dns-compare-client.connectsafe]
+        name = "connectsafe"
+        listen_host = ""
+        listen_port = '2620'
+
+    [dns-compare-client.yandex]
+        name = "yandex"
+        listen_host = ""
+        listen_port = '8887'
+
+    [dns-compare-client.comodo]
+        name = "comodo"
+        listen_host = ""
+        listen_port = '5626'
