@@ -9,6 +9,7 @@ SERVICE=21021
 TMP_DIR=tmp-git
 GIT_REPO=https://github.com/deeso/dns-lookup-service.git
 BASE_DIR=../../
+RUST_SRC=$BASE_DIR
 
 # cleaup Docker
 docker kill $DOCKER_NAME
@@ -18,16 +19,17 @@ rm -fr config.toml dns-lookup-service
 if [ ! -z "$GIT_REPO" ] 
 then
     git clone $GIT_REPO $TMP_DIR
-    BASE_DIR=$TMP_DIR
+    RUST_SRC=$TMP_DIR
+
 fi
 
 CARGO_BUILD_ARGS=
-DEBUG_BIN=$BASE_DIR/target/debug/$DOCKER_NAME
-RELEASE_BIN=$BASE_DIR/target/debug/$DOCKER_NAME
+DEBUG_BIN=$RUST_SRC/target/debug/$DOCKER_NAME
+RELEASE_BIN=$RUST_SRC/target/debug/$DOCKER_NAME
 TARGET_BIN=$DEBUG_BIN
 
 CONFIGS_DIR=$BASE_DIR/configs/
-MAINS_DIR=$BASE_DIR/mains/
+
 
 CONF_FILE=$CONFIGS_DIR/config.toml
 MAIN= #$MAINS_DIR/run-all-multiprocess.py
@@ -44,7 +46,8 @@ fi
 cp $CONF_FILE config.toml
 # hack
 
-cd $BASE_DIR
+BACK=`pwd`
+cd $RUST_SRC
 if [ ! -z "$CARGO_DO_RELEASE" ] 
 then
     cargo build --release $CARGO_BUILD_ARGS
@@ -53,6 +56,7 @@ else
     cargo build $CARGO_BUILD_ARGS
 fi
 
+cd $BACK
 cp $TARGET_BIN $RUST_BIN_NAME
 
 # setup dirs
@@ -79,11 +83,11 @@ cat rust_cmd.sh
 docker build -t $DOCKER_TAG .
 
 # clean up here
-rm -fr config.toml python_cmd.sh main.py package $TMP_DIR
+rm -fr config.toml rust_cmd.sh $RUST_BIN_NAME $TMP_DIR
 
 # run command not 
 echo "docker run $DOCKER_PORTS $DOCKER_VOL -it $DOCKER_ENV \
            --name $DOCKER_NAME $DOCKER_TAG"
 
-docker run -d $DOCKER_ADD_HOST $DOCKER_PORTS $DOCKER_VOL -it $DOCKER_ENV \
-           --name $DOCKER_NAME $DOCKER_TAG
+# docker run -d $DOCKER_ADD_HOST $DOCKER_PORTS $DOCKER_VOL -it $DOCKER_ENV \
+#            --name $DOCKER_NAME $DOCKER_TAG
