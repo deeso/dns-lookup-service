@@ -19,7 +19,7 @@ static DNS_SERVER: &'static str = "--dns_server";
 static V4: &'static str = "--ip4";
 static V6: &'static str = "--ip6";
 static CONFIG: &'static str = "--config";
-static SERVER: &'static str = "--server";
+static SERVER: &'static str = "--iron_server";
 static LHOST: &'static str = "--lhost";
 static LPORT: &'static str = "--lport";
 
@@ -243,6 +243,7 @@ impl DnsServerConfigs {
                         // The division was invalid
                         Err(_)    => println!("Could not read the result"),
                     }
+                    odscs = Some(dscs);
                 }
             }
         } else {

@@ -12,6 +12,7 @@ use config;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DnsLookupService {
+    pub name: String,
     pub dns_server: String,
     pub dns_port: String,
     pub use_tls: bool,
@@ -28,20 +29,23 @@ pub struct DnsLookupServices {
 
 #[derive(Serialize, Debug)]
 pub struct DnsLookupRequest {
-    pub name: String,
-    pub dns_server: String,
+    pub hostname: String,
 }
 
 impl DnsLookupRequest {
     pub fn from_web_json(req_payload: &String) -> Option<DnsLookupRequest> {
-        
         return None;    
     }
+
+    pub fn from_key(hostname: &String) -> Option<DnsLookupRequest> {
+        return Some(DnsLookupRequest{hostname: hostname.clone()});    
+    }    
 
 }
 
 #[derive(Serialize, Debug)]
 pub struct DnsLookupResult {
+    source: String,
     name: String,
     address: String,
     atype: String,
@@ -52,7 +56,7 @@ pub struct DnsLookupResults {
     results: Vec<DnsLookupResult>,
 }
 
-fn extract_results(response: &Message) -> DnsLookupResults {
+fn extract_results(response: &Message, source: &String) -> DnsLookupResults {
     // let mut results = Vec<DnsLookupResult>::new();
     let mut results : Vec<DnsLookupResult> = vec![];
 
@@ -64,6 +68,7 @@ fn extract_results(response: &Message) -> DnsLookupResults {
                 let ip = rdata.to_ip_addr().unwrap();
                 println!("{} {}", ans.name(), (ip).to_string());
                 let result = DnsLookupResult {
+                    source: source.clone(),
                     atype: "ip4".to_string(),
                     name: ans.name().to_string().clone(),
                     address: (ip).to_string().clone(),
@@ -96,14 +101,14 @@ impl DnsLookupService {
         let mut results : Vec<DnsLookupResult> = vec![];
         if self.ip4 {
             let response = self.check_ip4(&hostname);
-            let dns_results = extract_results(&response);
+            let dns_results = extract_results(&response, &self.name);
             for r in dns_results.results {
                 results.push(r)
             }
         } 
         if self.ip6 {
             let response = self.check_ip6(&hostname);
-            let dns_results = extract_results(&response);
+            let dns_results = extract_results(&response, &self.name);
             for r in dns_results.results {
                 results.push(r)
             }
@@ -139,6 +144,7 @@ impl DnsLookupServices {
         let servers = &dsc.servers;
         for c in servers {
             let dls = DnsLookupService {
+                name: c.name.clone(),
                 dns_server: c.nameserver.clone(),
                 dns_port: "53".to_string(),
                 use_tls: false,
