@@ -1,5 +1,5 @@
 [package]
-name = "dns-client-example"
+name = "dns-lookup-service"
 version = "0.1.0"
 authors = ["Adam Pridgen <adam.pridgen@thecoverofnight.com>"]
 

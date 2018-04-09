@@ -33,9 +33,9 @@ pub struct DnsLookupRequest {
 }
 
 impl DnsLookupRequest {
-    pub fn from_web_json(req_payload: &String) -> Option<DnsLookupRequest> {
-        return None;    
-    }
+    // pub fn from_web_json(req_payload: &String) -> Option<DnsLookupRequest> {
+    //     return None;
+    // }
 
     pub fn from_key(hostname: &String) -> Option<DnsLookupRequest> {
         return Some(DnsLookupRequest{hostname: hostname.clone()});    
