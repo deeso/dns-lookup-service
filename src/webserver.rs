@@ -73,7 +73,7 @@ pub fn run_iron_server(dlss: &lookup::DnsLookupServices) {
 
     let hostname = &dlss.listen_host;
     let port = &dlss.listen_port;
-    let msg = format!("Starting to listen for dns-lookup requests on{}:{}", &hostname, &port);
+    let msg = format!("Starting to listen for dns-lookup requests on {}:{}", &hostname, &port);
     info!("{}", msg);
     let address = format!("{}:{}", hostname, port);
     Iron::new(router).http(address).unwrap();
