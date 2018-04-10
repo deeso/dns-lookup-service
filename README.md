@@ -1,6 +1,6 @@
-### dns-lookup-service
+### dns-lookup-service description
 
-This is a pet project to help perform DNS requests across a number of different providers.  The program can be run as a service or as a command line program.
+This is a pet project to help perform DNS requests across a number of different providers.  The program will query a set of domain name servers measuring the time and capturing all the answers in the A and AAAA records.  The program can be run as a service, in __Docker__, or as a command line program.
 
 ### Running as a Service
 
