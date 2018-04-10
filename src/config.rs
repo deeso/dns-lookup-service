@@ -12,6 +12,8 @@ use serde_json::Value as Json;
 extern crate argparse;
 use argparse::{ArgumentParser, StoreTrue, Store};
 
+extern crate log4rs;
+
 static SERVERS : &'static str = "servers";
 static PORT: &'static str = "--port";
 static HOSTNAME: &'static str = "--hostname";
@@ -19,6 +21,7 @@ static DNS_SERVER: &'static str = "--dns_server";
 static V4: &'static str = "--ip4";
 static V6: &'static str = "--ip6";
 static CONFIG: &'static str = "--config";
+static LOG_CONFIG: &'static str = "--log_config";
 static SERVER: &'static str = "--iron_server";
 static LHOST: &'static str = "--lhost";
 static LPORT: &'static str = "--lport";
@@ -36,6 +39,7 @@ pub struct DnsServerConfig {
 
 pub struct DnsServiceArgs {
     pub  config: String,
+    pub  log_config: String,
     pub  ip4: bool,
     pub  ip6: bool,
     pub  dns_server: String,
@@ -68,6 +72,7 @@ pub fn parse_args() -> DnsServiceArgs {
     let mut ip6 = false;
     let mut ip4 = false;
     let mut is_server = false;
+    let mut log_config_file = "".to_string();
 
     
     // must be scoped because of the mutable borrow
@@ -81,6 +86,10 @@ pub fn parse_args() -> DnsServiceArgs {
         ap.refer(&mut config_file)
             .add_option(&[CONFIG], Store,
             "use config");
+
+        ap.refer(&mut log_config_file)
+            .add_option(&[LOG_CONFIG], Store,
+            "configure the logger with");
 
         ap.refer(&mut ip6)
             .add_option(&[V6], StoreTrue,
@@ -126,6 +135,7 @@ pub fn parse_args() -> DnsServiceArgs {
         listen_host: listen_host,
         listen_port: listen_port,
         config: config_file,
+        log_config: log_config_file,
         ip6: ip6,
         ip4: ip4,
         dns_server: dns_server,
@@ -172,7 +182,7 @@ pub fn read_servers_config(name: &String) -> Option<Vec<DnsServerConfig>> {
                                 results.push(result);        
                             }
                             Err (err) => {
-                                println!("Could not read the result: {}\nErr: {}", ds_str, err)
+                                error!("Could not read the result: {}\nErr: {}", ds_str, err)
                             }
                         }                        
                     }
@@ -182,7 +192,7 @@ pub fn read_servers_config(name: &String) -> Option<Vec<DnsServerConfig>> {
 
             }
         }
-        None => println!("Could not read the result"),
+        None => error!("Could not read the result"),
     }
     return None;
 }
@@ -198,7 +208,7 @@ pub fn read_config(name: &String) -> Option<Json> {
 
         }
         Err(error) => {
-            println!("IO failed to open file: {}", error);  
+            error!("IO failed to open file: {}", error);  
             return None;            
         } 
     }
@@ -208,7 +218,7 @@ pub fn read_config(name: &String) -> Option<Json> {
             let json = convert(toml);
             return Some(json);
         }
-        Err(error) => println!("failed to parse TOML: {}", error),
+        Err(error) => error!("failed to parse TOML: {}", error),
     }
     return None;
 }
@@ -222,6 +232,10 @@ impl DnsServerConfigs {
         let listen_port = dsa.listen_port.clone();
         let is_server = dsa.is_server.clone();
         let mut odscs : Option<DnsServerConfigs> = None;
+
+        if dsa.log_config.len() > 0 {
+            log4rs::init_file(&dsa.log_config, Default::default()).unwrap();
+        }
         if dsa.config.len() > 0 {
             let o_servers = read_servers_config(&dsa.config);
             match o_servers {
@@ -233,16 +247,15 @@ impl DnsServerConfigs {
                         listen_host: listen_host,
                         is_server: is_server,
                     };
-                    let json_result = serde_json::to_string(&dscs);
-
-                    match json_result {
-                        // The division was valid
-                        Ok(json) => {
-                            println!("{}", serde_json::to_string_pretty(&json).unwrap());
-                        }
-                        // The division was invalid
-                        Err(_)    => println!("Could not read the result"),
-                    }
+                    // let json_result = serde_json::to_string(&dscs);
+                    // match json_result {
+                    //     // The division was valid
+                    //     Ok(json) => {
+                    //         println!("{}", serde_json::to_string_pretty(&json).unwrap());
+                    //     }
+                    //     // The division was invalid
+                    //     Err(_)    => println!("Could not read the result"),
+                    // }
                     odscs = Some(dscs);
                 }
             }

@@ -8,11 +8,10 @@ extern crate argparse;
 extern crate iron;
 extern crate router;
 extern crate toml;
-extern crate futures;
-extern crate gotham;
-extern crate hyper;
-extern crate mime;
 
+#[macro_use]
+extern crate log;
+extern crate log4rs;
 
 mod config;
 mod lookup;
@@ -23,12 +22,13 @@ mod webserver;
 fn main() {
 
     let dsa: config::DnsServiceArgs = config::parse_args();
-    println!("Failed to parse a dns server config from arguments");
     let odscs = config::DnsServerConfigs::from_service_args(&dsa);
     match odscs.as_ref() {
-        Some(_) => {},
+        Some(_) => {
+            debug!("Completed creating create dns-lookup-service config");
+        },
         None => {
-            println!("Failed to parse a dns server config from arguments");
+            error!("Failed to parse and create dns-lookup-service config from arguments");
             return;
         }
     }
@@ -42,12 +42,12 @@ fn main() {
             } else {
                 let response = dlss.check(&dsa.hostname);
                 let j = serde_json::to_string(&response);
-                println!("The results is:\n{}", j.unwrap());
+                println!("\n{}\n", j.unwrap());
                 return;                
             }
         }
         None => {
-            println!("Failed to parse a dns server config from arguments");
+            error!("Failed to parse a dns server config from arguments");
             return;
         }
     }

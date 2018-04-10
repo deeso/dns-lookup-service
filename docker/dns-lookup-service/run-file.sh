@@ -14,7 +14,7 @@ RUST_SRC=$BASE_DIR
 # cleaup Docker
 docker kill $DOCKER_NAME
 docker rm $DOCKER_NAME
-rm -fr config.toml dns-lookup-service
+rm -fr config.toml log_config.toml dns-lookup-service
 
 if [ ! -z "$GIT_REPO" ] 
 then
@@ -32,6 +32,8 @@ CONFIGS_DIR=$BASE_DIR/configs/
 
 
 CONF_FILE=$CONFIGS_DIR/config.toml
+LOG_CONF_FILE=$CONFIGS_DIR/log_config.toml
+
 MAIN= #$MAINS_DIR/run-all-multiprocess.py
 HOST_FILE= #$CONFIGS_DIR/hosts
 
@@ -44,6 +46,7 @@ then
 fi
 
 cp $CONF_FILE config.toml
+cp $LOG_CONF_FILE log_config.toml
 # hack
 
 BACK=`pwd`
@@ -74,20 +77,19 @@ mkdir -p $DOCKER_LOGS
 chmod -R a+rw $DOCKER_NB
 
 # TODO comment below if you want to save to Mongo
-echo "$RUST_BIN_NAME -config config.toml -iron_server" > rust_cmd.sh
-
-
+echo "./$RUST_BIN_NAME --config config.toml --log_config log_config.toml --iron_server" > rust_cmd.sh
 cat rust_cmd.sh
 
 #docker build --no-cache -t $DOCKER_TAG .
 docker build -t $DOCKER_TAG .
 
 # clean up here
-rm -fr config.toml rust_cmd.sh $RUST_BIN_NAME $TMP_DIR
+rm -fr config.toml log_config.toml rust_cmd.sh $RUST_BIN_NAME $TMP_DIR
+echo "rm -fr config.toml rust_cmd.sh $RUST_BIN_NAME $TMP_DIR"
 
 # run command not 
 echo "docker run $DOCKER_PORTS $DOCKER_VOL -it $DOCKER_ENV \
            --name $DOCKER_NAME $DOCKER_TAG"
 
-# docker run -d $DOCKER_ADD_HOST $DOCKER_PORTS $DOCKER_VOL -it $DOCKER_ENV \
-#            --name $DOCKER_NAME $DOCKER_TAG
+docker run -d $DOCKER_ADD_HOST $DOCKER_PORTS $DOCKER_VOL -it $DOCKER_ENV \
+            --name $DOCKER_NAME $DOCKER_TAG

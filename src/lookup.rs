@@ -7,6 +7,7 @@ use trust_dns::op::Message;
 use trust_dns::rr::{DNSClass, Name, Record, RecordType};
 use trust_dns::udp::UdpClientConnection;
 use std::str::FromStr;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use config;
 
@@ -49,6 +50,7 @@ pub struct DnsLookupResult {
     name: String,
     address: String,
     atype: String,
+    time_ms: u64,
 }
 
 #[derive(Serialize, Debug)]
@@ -56,28 +58,44 @@ pub struct DnsLookupResults {
     results: Vec<DnsLookupResult>,
 }
 
-fn extract_results(response: &Message, source: &String) -> DnsLookupResults {
+pub struct DnsServerResponse {
+    msg: Message,
+    start_time: u64,
+    end_time: u64,
+}
+
+fn extract_results(dsr: &DnsServerResponse, source: &String) -> DnsLookupResults {
     // let mut results = Vec<DnsLookupResult>::new();
     let mut results : Vec<DnsLookupResult> = vec![];
 
-    let answers: &[Record] = response.answers();
+    let answers: &[Record] = dsr.msg.answers();
+    let time_ms = &dsr.end_time - &dsr.start_time;
     if answers.len() > 0 {
         for ans in answers {
             let rdata = ans.rdata();
             if let RecordType::A = ans.rr_type() {
                 let ip = rdata.to_ip_addr().unwrap();
-                println!("{} {}", ans.name(), (ip).to_string());
+                // println!("{} {}", ans.name(), (ip).to_string());
                 let result = DnsLookupResult {
                     source: source.clone(),
                     atype: "ip4".to_string(),
                     name: ans.name().to_string().clone(),
                     address: (ip).to_string().clone(),
+                    time_ms: time_ms,
                 };
                 results.push(result);
 
             } else if let RecordType::AAAA = ans.rr_type() {
                 let ip = rdata.to_ip_addr().unwrap();
-                println!("{} {}", ans.name(), (ip).to_string());                      
+                let result = DnsLookupResult {
+                    source: source.clone(),
+                    atype: "ip6".to_string(),
+                    name: ans.name().to_string().clone(),
+                    address: (ip).to_string().clone(),
+                    time_ms: time_ms,
+                };
+                results.push(result);
+                // println!("{} {}", ans.name(), (ip).to_string());                      
             } 
         }
     }
@@ -102,6 +120,8 @@ impl DnsLookupService {
         if self.ip4 {
             let response = self.check_ip4(&hostname);
             let dns_results = extract_results(&response, &self.name);
+            let msg = format!("Extracted A {} records using {} for {}", dns_results.results.len(), &self.dns_server, &hostname);
+            debug!("{}", msg);
             for r in dns_results.results {
                 results.push(r)
             }
@@ -109,6 +129,8 @@ impl DnsLookupService {
         if self.ip6 {
             let response = self.check_ip6(&hostname);
             let dns_results = extract_results(&response, &self.name);
+            let msg = format!("Extracted AAAA {} records using {} for {}", dns_results.results.len(), &self.dns_server, &hostname);
+            debug!("{}", msg);
             for r in dns_results.results {
                 results.push(r)
             }
@@ -117,23 +139,77 @@ impl DnsLookupService {
         return dlr;    
     }
 
-    fn check_ip4(&self, hostname: &String) -> Message{
+    fn check_ip4(&self, hostname: &String) -> DnsServerResponse{
         let name = Name::from_str(*&hostname).unwrap();
         let address = format!("{}:{}", self.dns_server, self.dns_port).parse().unwrap();
+        let msg = format!("Looking up A using {:?} for {}", &address, &hostname);
+        debug!("{}", msg);
         let conn = UdpClientConnection::new(address).unwrap();
         let client = SyncClient::new(conn);
+        let start = SystemTime::now();
+        let mut now_epoch = start.duration_since(UNIX_EPOCH);
+        let mut start_time : u64 = 0;
+        match now_epoch {
+            Ok(result) => {
+                start_time = result.as_secs() * 1000 + result.subsec_nanos() as u64 / 1_000_000;
+            },
+            Err(_) => {}
+        }        
         let response: Message = client.query(&name, DNSClass::IN, RecordType::A).unwrap();
-        return response;
+        let end = SystemTime::now();
+        now_epoch = end.duration_since(UNIX_EPOCH);
+        let mut end_time : u64 = 0;
+        match now_epoch {
+            Ok(result) => {
+                end_time = result.as_secs() * 1000 + result.subsec_nanos() as u64 / 1_000_000;
+            },
+            Err(_) => {}
+        }        
+
+        let x = DnsServerResponse{
+            msg: response,
+            start_time: start_time,
+            end_time: end_time,
+        };
+        return x;
 
     }
 
-    fn check_ip6(&self, hostname: &String) -> Message{
+    fn check_ip6(&self, hostname: &String) -> DnsServerResponse{
+
         let name = Name::from_str(&*hostname).unwrap();
         let address = format!("{}:{}", self.dns_server, self.dns_port).parse().unwrap();
+        let msg = format!("Looking up AAAA using {:?} for {}", &address, &hostname);
+        debug!("{}", msg);
         let conn = UdpClientConnection::new(address).unwrap();
         let client = SyncClient::new(conn);
+        let start = SystemTime::now();
+        let mut now_epoch = start.duration_since(UNIX_EPOCH);
+        let mut start_time : u64 = 0;
+        match now_epoch {
+            Ok(result) => {
+                start_time = result.as_secs() * 1000 + result.subsec_nanos() as u64 / 1_000_000;
+            },
+            Err(_) => {}
+        }        
+
         let response: Message = client.query(&name, DNSClass::IN, RecordType::AAAA).unwrap();
-        return response;
+        let end = SystemTime::now();
+        now_epoch = end.duration_since(UNIX_EPOCH);
+        let mut end_time : u64 = 0;
+        match now_epoch {
+            Ok(result) => {
+                end_time = result.as_secs() * 1000 + result.subsec_nanos() as u64 / 1_000_000;
+            },
+            Err(_) => {}
+        }        
+
+        let x = DnsServerResponse{
+            msg: response,
+            start_time: start_time,
+            end_time: end_time,
+        };
+        return x;
     }
 
 }
@@ -143,6 +219,8 @@ impl DnsLookupServices {
         let mut results : Vec<DnsLookupService> = vec![];
         let servers = &dsc.servers;
         for c in servers {
+            let msg = format!("Configuring {:?} using server: {} for ip4:{} and ip6:{}", &c.name, &c.nameserver, &c.ip4, &c.ip6);
+            debug!("{}", msg);
             let dls = DnsLookupService {
                 name: c.name.clone(),
                 dns_server: c.nameserver.clone(),
@@ -164,6 +242,9 @@ impl DnsLookupServices {
         let mut results : Vec<DnsLookupResult> = vec![];
         let servicers = &self.servicers; 
         for service in servicers {
+            let msg = format!("Checking {:?} using server: {} for: {}", &service.name, &service.dns_server, hostname);
+            debug!("{}", msg);
+
             let svc_results = service.check(hostname);
             for r in svc_results.results {
                 results.push(r)
